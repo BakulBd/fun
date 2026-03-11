@@ -24,9 +24,22 @@ export async function generateMetadata({
 
   const cookieStore = await cookies();
   const geoLang = cookieStore.get("geo-lang")?.value;
-  const { prediction, language, name: prettyName } = getPrediction(safeName, lang, geoLang);
+  const { prediction, language, gender, name: prettyName } = getPrediction(safeName, lang, geoLang);
 
-  const title =
+  // Viral clickbait OG title — makes people WANT to click
+  const ogTitle =
+    language === "bn"
+      ? `😂 ${prettyName} কে নিয়ে মিম বানানো হয়েছে!`
+      : `😂 ${prettyName} just got roasted!`;
+
+  // Teaser description — don't spoil the joke, create curiosity
+  const ogDescription =
+    language === "bn"
+      ? `কেউ ${prettyName} এর বিয়ের পরের ভবিষ্যৎ নিয়ে মিম বানিয়েছে 🤣 ক্লিক করে দেখো!`
+      : `Someone made a meme about ${prettyName}'s married life 🤣 Click to see it!`;
+
+  // Page title (shown in browser tab) — includes the actual prediction
+  const pageTitle =
     language === "bn"
       ? `${prettyName} এর বিবাহিত জীবনের ভবিষ্যদ্বাণী 😂`
       : `${prettyName}'s Married Life Prediction 😂`;
@@ -34,18 +47,18 @@ export async function generateMetadata({
   const ogImageUrl = `/api/og?name=${encodeURIComponent(safeName)}${lang ? `&lang=${lang}` : ""}`;
 
   return {
-    title,
+    title: pageTitle,
     description: prediction,
     openGraph: {
-      title,
-      description: prediction,
+      title: ogTitle,
+      description: ogDescription,
       url: `/${encodeURIComponent(safeName)}`,
       images: [
         {
           url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: title,
+          alt: ogTitle,
           type: "image/png",
         },
       ],
@@ -54,11 +67,10 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description: prediction,
+      title: ogTitle,
+      description: ogDescription,
       images: [ogImageUrl],
     },
-
   };
 }
 
