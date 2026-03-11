@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { sanitizeName } from "@/lib/sanitize";
 import { getPrediction } from "@/lib/get-prediction";
 import NamePageClient from "./client";
@@ -15,6 +16,11 @@ export async function generateMetadata({
   const { name: rawName } = await params;
   const { lang } = await searchParams;
   const safeName = sanitizeName(rawName);
+
+  if (!safeName) {
+    return { title: "Not Found" };
+  }
+
   const { prediction, language, name: prettyName } = getPrediction(safeName, lang);
 
   const title =
@@ -59,6 +65,12 @@ export default async function NamePage({ params, searchParams }: PageProps) {
   const { name: rawName } = await params;
   const { lang } = await searchParams;
   const safeName = sanitizeName(rawName);
+
+  // If name is empty after sanitization, show 404
+  if (!safeName) {
+    notFound();
+  }
+
   const { prediction, language, name: prettyName } = getPrediction(safeName, lang);
 
   return (

@@ -12,7 +12,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fun-marriage.vercel.app";
+const rawUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fun-marriage.vercel.app";
+// Ensure URL is clean — no trailing slash, valid format
+const siteUrl = rawUrl.replace(/\/+$/, "");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

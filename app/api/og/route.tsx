@@ -1,17 +1,22 @@
 import { ImageResponse } from "@vercel/og";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { sanitizeName } from "@/lib/sanitize";
 import { getPrediction } from "@/lib/get-prediction";
 
 export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const rawName = searchParams.get("name") || "Friend";
-  const lang = searchParams.get("lang");
+  try {
+    const { searchParams } = new URL(req.url);
+    const rawName = searchParams.get("name") || "Friend";
+    const lang = searchParams.get("lang");
 
-  const safeName = sanitizeName(rawName);
-  const { prediction, language, name: prettyName } = getPrediction(safeName, lang);
+    const safeName = sanitizeName(rawName);
+    if (!safeName) {
+      return NextResponse.json({ error: "Invalid name" }, { status: 400 });
+    }
+
+    const { prediction, language, name: prettyName } = getPrediction(safeName, lang);
 
   const title =
     language === "bn"
@@ -150,4 +155,11 @@ export async function GET(req: NextRequest) {
       },
     }
   );
+  } catch (e) {
+    console.error("OG image generation error:", e);
+    return NextResponse.json(
+      { error: "Failed to generate image" },
+      { status: 500 }
+    );
+  }
 }
