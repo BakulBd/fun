@@ -5,9 +5,12 @@ interface TrendingNamesProps {
 }
 
 const trendingNames = [
-  "Rahim", "Nusrat", "Sumon", "Tasnim", "Rakib", "Sadia",
-  "Arif", "Farzana", "Fahim", "Lamia", "Sakib", "Anika",
-  "Tanvir", "Riya", "Bakul", "Mitu", "Rubel", "Sharmin",
+  // Male names - mix of popular BD names
+  "Rahim", "Sumon", "Rakib", "Arif", "Fahim", "Sakib",
+  "Tanvir", "Bakul", "Rubel", "Tipu", "Rasel", "Sabbir",
+  // Female names - mix of popular BD names
+  "Nusrat", "Tasnim", "Sadia", "Farzana", "Lamia", "Anika",
+  "Riya", "Mitu", "Sharmin", "Jannatul", "Bristy", "Tania",
 ];
 
 export default function TrendingNames({ lang }: TrendingNamesProps) {
