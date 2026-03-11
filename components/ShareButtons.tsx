@@ -152,7 +152,7 @@ export default function ShareButtons({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={handleCopy}
-        className={`${buttonBase} bg-gradient-to-r from-green-500 to-emerald-500`}
+        className={`${buttonBase} bg-linear-to-r from-green-500 to-emerald-500`}
       >
         {copied ? "✅ Copied!" : "📋 Copy Link"}
       </motion.button>
@@ -161,7 +161,7 @@ export default function ShareButtons({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={handleDownload}
-        className={`${buttonBase} bg-gradient-to-r from-orange-500 to-amber-500`}
+        className={`${buttonBase} bg-linear-to-r from-orange-500 to-amber-500`}
       >
         📥 Download Meme
       </motion.button>

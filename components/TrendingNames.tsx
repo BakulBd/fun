@@ -54,7 +54,7 @@ export default function TrendingNames({ lang }: TrendingNamesProps) {
       transition={{ delay: 0.5 }}
     >
       <h2 className="text-2xl md:text-3xl font-extrabold text-center mb-2">
-        <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+        <span className="bg-linear-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
           {bn ? "🔥 এই নামগুলো চেষ্টা করো" : "🔥 Try These Names"}
         </span>
       </h2>
@@ -76,7 +76,7 @@ export default function TrendingNames({ lang }: TrendingNamesProps) {
               <motion.div
                 whileHover={{ scale: 1.1, rotate: [-1, 1, -1, 0] }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-pink-500/10 to-purple-500/10 hover:from-pink-500/20 hover:to-purple-500/20 border-2 border-pink-300 dark:border-pink-700 rounded-full font-bold text-gray-800 dark:text-gray-100 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-linear-to-r from-pink-500/10 to-purple-500/10 hover:from-pink-500/20 hover:to-purple-500/20 border-2 border-pink-300 dark:border-pink-700 rounded-full font-bold text-gray-800 dark:text-gray-100 shadow-md hover:shadow-lg transition-all cursor-pointer"
               >
                 <span>{emoji}</span>
                 <span>{name}</span>

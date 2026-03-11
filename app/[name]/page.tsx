@@ -58,9 +58,7 @@ export async function generateMetadata({
       description: prediction,
       images: [ogImageUrl],
     },
-    other: {
-      "fb:app_id": "",
-    },
+
   };
 }
 

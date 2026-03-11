@@ -26,7 +26,7 @@ export default function GlobalError({
           </p>
           <button
             onClick={() => reset()}
-            className="inline-block bg-gradient-to-r from-pink-500 to-red-500 text-white font-bold py-3 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+            className="inline-block bg-linear-to-r from-pink-500 to-red-500 text-white font-bold py-3 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
           >
             🔄 Try Again
           </button>

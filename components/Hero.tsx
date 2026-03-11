@@ -31,7 +31,7 @@ export default function Hero({ lang }: HeroProps) {
           💍
         </motion.span>
 
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent leading-tight">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold bg-linear-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent leading-tight">
           {bn ? (
             <>
               বিয়ের পরের
@@ -60,7 +60,7 @@ export default function Hero({ lang }: HeroProps) {
         </p>
 
         <motion.div
-          className="mt-4 inline-block bg-gradient-to-r from-pink-500/10 to-yellow-500/10 rounded-full px-6 py-2 border border-pink-200 dark:border-pink-800"
+          className="mt-4 inline-block bg-linear-to-r from-pink-500/10 to-yellow-500/10 rounded-full px-6 py-2 border border-pink-200 dark:border-pink-800"
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >

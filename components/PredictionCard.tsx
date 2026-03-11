@@ -25,7 +25,7 @@ export default function PredictionCard({
       transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
       className="max-w-2xl mx-auto"
     >
-      <div className="relative bg-gradient-to-br from-yellow-100 via-pink-100 to-purple-100 dark:from-yellow-900/30 dark:via-pink-900/30 dark:to-purple-900/30 rounded-3xl p-8 md:p-12 shadow-2xl border-4 border-pink-300 dark:border-pink-700">
+      <div className="relative bg-linear-to-br from-yellow-100 via-pink-100 to-purple-100 dark:from-yellow-900/30 dark:via-pink-900/30 dark:to-purple-900/30 rounded-3xl p-8 md:p-12 shadow-2xl border-4 border-pink-300 dark:border-pink-700">
         {/* Decorative corner emojis */}
         <span className="absolute top-3 left-4 text-3xl">💍</span>
         <span className="absolute top-3 right-4 text-3xl">💒</span>
@@ -33,7 +33,7 @@ export default function PredictionCard({
         <span className="absolute bottom-3 right-4 text-3xl">😂</span>
 
         <motion.h2
-          className="text-2xl md:text-3xl font-extrabold text-center bg-gradient-to-r from-pink-600 to-red-600 bg-clip-text text-transparent mb-6"
+          className="text-2xl md:text-3xl font-extrabold text-center bg-linear-to-r from-pink-600 to-red-600 bg-clip-text text-transparent mb-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}

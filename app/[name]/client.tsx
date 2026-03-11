@@ -50,7 +50,7 @@ export default function NamePageClient({
           >
             💍
           </motion.span>
-          <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-extrabold bg-linear-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
             {language === "bn"
               ? "বিবাহিত জীবনের ভবিষ্যদ্বাণী"
               : "Married Life Prediction"}
@@ -102,7 +102,7 @@ export default function NamePageClient({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowInput(true)}
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+                className="w-full py-4 bg-linear-to-r from-purple-500 to-pink-500 text-white font-bold rounded-2xl text-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
               >
                 {language === "bn"
                   ? "✍️ বন্ধুর নাম লিখো — তার ভবিষ্যৎ দেখো!"
@@ -140,7 +140,7 @@ export default function NamePageClient({
                     type="submit"
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className="flex-1 bg-gradient-to-r from-pink-500 to-red-500 text-white font-bold py-3 px-6 rounded-2xl text-lg shadow-lg cursor-pointer"
+                    className="flex-1 bg-linear-to-r from-pink-500 to-red-500 text-white font-bold py-3 px-6 rounded-2xl text-lg shadow-lg cursor-pointer"
                   >
                     🔮{" "}
                     {language === "bn" ? "ভবিষ্যৎ দেখো" : "See Prediction"}
@@ -174,7 +174,7 @@ export default function NamePageClient({
               const newLang = language === "bn" ? "en" : "bn";
               router.push(`/${encodeURIComponent(rawName)}?lang=${newLang}`);
             }}
-            className="px-5 py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-sm"
+            className="px-5 py-3 bg-linear-to-r from-green-500 to-teal-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-sm"
           >
             {language === "bn" ? "🇬🇧 English" : "🇧🇩 বাংলা"}
           </motion.button>
@@ -183,7 +183,7 @@ export default function NamePageClient({
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-5 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-sm"
+              className="px-5 py-3 bg-linear-to-r from-gray-600 to-gray-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer text-sm"
             >
               🏠 {language === "bn" ? "হোমে যাও" : "Back to Home"}
             </motion.div>
@@ -192,7 +192,7 @@ export default function NamePageClient({
 
         {/* Viral prompt — encourage sharing */}
         <motion.div
-          className="max-w-md mx-auto mt-10 text-center bg-gradient-to-r from-yellow-50 to-pink-50 dark:from-yellow-900/20 dark:to-pink-900/20 rounded-2xl p-5 border border-pink-200 dark:border-pink-800"
+          className="max-w-md mx-auto mt-10 text-center bg-linear-to-r from-yellow-50 to-pink-50 dark:from-yellow-900/20 dark:to-pink-900/20 rounded-2xl p-5 border border-pink-200 dark:border-pink-800"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.6 }}

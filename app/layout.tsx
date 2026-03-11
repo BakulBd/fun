@@ -38,11 +38,21 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "After Marriage Prediction",
     url: siteUrl,
+    images: [
+      {
+        url: "/api/og?name=Friend",
+        width: 1200,
+        height: 630,
+        alt: "After Marriage Prediction Generator",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "After Marriage Prediction Generator 😂",
     description: "Generate hilarious after-marriage predictions for any name!",
+    images: ["/api/og?name=Friend"],
   },
 };
 

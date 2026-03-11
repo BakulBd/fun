@@ -59,7 +59,7 @@ export default function NameInput({ lang }: NameInputProps) {
           type="submit"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white font-bold py-4 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+          className="w-full bg-linear-to-r from-pink-500 to-red-500 text-white font-bold py-4 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
         >
           {bn
             ? "🔮 বিয়ের পরের ভবিষ্যৎ দেখো!"
