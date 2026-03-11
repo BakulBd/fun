@@ -5,12 +5,12 @@ import { getPrediction } from "@/lib/get-prediction";
 
 export const runtime = "edge";
 
-/* ── Bengali font: Hind Siliguri Bold (251 KB) ──
+/* ── Bengali font: Noto Sans Bengali Bold (142 KB) ──
+   Static TTF with full Bengali conjunct / ligature support.
    Bundled at build time → zero runtime network calls.
-   Registered for weights 400, 700, 900 so Satori never falls back to system
-   font for Bengali glyphs. */
-const bnFontData = fetch(
-  new URL("./fonts/HindSiliguri-Bold.ttf", import.meta.url)
+   .slice(0) on each registration so Satori never detaches a shared buffer. */
+const bnFontPromise = fetch(
+  new URL("./fonts/NotoSansBengali-Bold.ttf", import.meta.url)
 ).then((r) => r.arrayBuffer());
 
 export async function GET(req: NextRequest) {
@@ -48,7 +48,10 @@ export async function GET(req: NextRequest) {
     const nameLen = prettyName.length;
     const nameSize = nameLen > 16 ? 48 : nameLen > 10 ? 56 : 64;
 
-    // Build fonts — register Bengali font for ALL weights so Satori always uses it
+    /* ── Font registration ──
+       For Bengali: register NotoSansBengali-Bold for weights 400 / 700 / 900.
+       Each entry gets its OWN ArrayBuffer copy via .slice(0) to prevent
+       Satori from detaching a shared buffer after parsing the first one. */
     const fonts: {
       name: string;
       data: ArrayBuffer;
@@ -57,11 +60,11 @@ export async function GET(req: NextRequest) {
     }[] = [];
 
     if (isBn) {
-      const fd = await bnFontData;
+      const buf = await bnFontPromise;
       fonts.push(
-        { name: "BN", data: fd, weight: 400, style: "normal" },
-        { name: "BN", data: fd, weight: 700, style: "normal" },
-        { name: "BN", data: fd, weight: 900, style: "normal" }
+        { name: "BN", data: buf.slice(0), weight: 400, style: "normal" },
+        { name: "BN", data: buf.slice(0), weight: 700, style: "normal" },
+        { name: "BN", data: buf.slice(0), weight: 900, style: "normal" }
       );
     }
 
@@ -81,57 +84,71 @@ export async function GET(req: NextRequest) {
             overflow: "hidden",
           }}
         >
-          {/* Top-left glow */}
+          {/* ── Ambient glow: purple top-left ── */}
           <div
             style={{
               display: "flex",
               position: "absolute",
-              top: "-100px",
-              left: "-60px",
-              width: "420px",
-              height: "420px",
+              top: "-120px",
+              left: "-80px",
+              width: "500px",
+              height: "500px",
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)",
+                "radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)",
             }}
           />
-          {/* Bottom-right glow */}
+          {/* ── Ambient glow: pink bottom-right ── */}
           <div
             style={{
               display: "flex",
               position: "absolute",
-              bottom: "-80px",
-              right: "-40px",
-              width: "380px",
-              height: "380px",
+              bottom: "-100px",
+              right: "-60px",
+              width: "460px",
+              height: "460px",
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(236,72,153,0.1) 0%, transparent 70%)",
+                "radial-gradient(circle, rgba(236,72,153,0.13) 0%, transparent 70%)",
+            }}
+          />
+          {/* ── Subtle center glow ── */}
+          <div
+            style={{
+              display: "flex",
+              position: "absolute",
+              top: "180px",
+              left: "400px",
+              width: "400px",
+              height: "300px",
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%)",
             }}
           />
 
-          {/* Gradient accent bar */}
+          {/* ── Rainbow accent bar (top) ── */}
           <div
             style={{
               display: "flex",
               width: "100%",
-              height: "6px",
+              height: "5px",
               background:
                 "linear-gradient(90deg, #7c3aed, #a855f7, #ec4899, #f97316, #eab308)",
             }}
           />
 
-          {/* Content */}
+          {/* ── Main content ── */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               flex: 1,
-              padding: "40px 56px 30px",
+              padding: "44px 60px 32px",
               justifyContent: "space-between",
             }}
           >
-            {/* Header: Name + Badge */}
+            {/* Header: Name + badge */}
             <div style={{ display: "flex", flexDirection: "column" }}>
               <div
                 style={{
@@ -146,18 +163,18 @@ export async function GET(req: NextRequest) {
               >
                 {prettyName}
               </div>
-              <div style={{ display: "flex", marginTop: "10px" }}>
+              <div style={{ display: "flex", marginTop: "12px" }}>
                 <div
                   style={{
                     display: "flex",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     fontWeight: 700,
                     color: "#c4b5fd",
                     textTransform: "uppercase",
                     letterSpacing: "4px",
-                    background: "rgba(124,58,237,0.2)",
-                    border: "1px solid rgba(139,92,246,0.35)",
-                    padding: "5px 16px",
+                    background: "rgba(124,58,237,0.18)",
+                    border: "1px solid rgba(139,92,246,0.3)",
+                    padding: "6px 18px",
                     borderRadius: "6px",
                     fontFamily,
                   }}
@@ -169,24 +186,46 @@ export async function GET(req: NextRequest) {
               </div>
             </div>
 
-            {/* Prediction text */}
+            {/* ── Prediction text with left accent line ── */}
             <div
               style={{
                 display: "flex",
-                fontSize: `${pSize}px`,
-                fontWeight: 700,
-                color: "#e2e8f0",
-                lineHeight: 1.5,
-                maxWidth: "1020px",
-                fontFamily,
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: "20px",
+                maxWidth: "1060px",
               }}
             >
-              {"\u201C"}
-              {text}
-              {"\u201D"}
+              {/* Decorative left bar */}
+              <div
+                style={{
+                  display: "flex",
+                  width: "4px",
+                  minHeight: "60px",
+                  height: "100%",
+                  borderRadius: "4px",
+                  background:
+                    "linear-gradient(180deg, #a855f7, #ec4899)",
+                  flexShrink: 0,
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: `${pSize}px`,
+                  fontWeight: 700,
+                  color: "#e2e8f0",
+                  lineHeight: 1.55,
+                  fontFamily,
+                }}
+              >
+                {"\u201C"}
+                {text}
+                {"\u201D"}
+              </div>
             </div>
 
-            {/* Footer */}
+            {/* ── Footer ── */}
             <div
               style={{
                 display: "flex",
@@ -206,9 +245,9 @@ export async function GET(req: NextRequest) {
                 <div
                   style={{
                     display: "flex",
-                    width: "30px",
-                    height: "30px",
-                    borderRadius: "6px",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "8px",
                     background:
                       "linear-gradient(135deg, #7c3aed, #ec4899)",
                     alignItems: "center",
@@ -222,7 +261,7 @@ export async function GET(req: NextRequest) {
                 </div>
                 <div
                   style={{
-                    fontSize: "18px",
+                    fontSize: "17px",
                     fontWeight: 700,
                     color: "#64748b",
                   }}
@@ -231,18 +270,19 @@ export async function GET(req: NextRequest) {
                 </div>
               </div>
 
-              {/* CTA */}
+              {/* CTA pill */}
               <div
                 style={{
                   display: "flex",
                   background:
-                    "linear-gradient(135deg, #7c3aed, #9333ea)",
+                    "linear-gradient(135deg, #7c3aed, #a855f7)",
                   color: "white",
-                  padding: "9px 26px",
+                  padding: "10px 28px",
                   borderRadius: "50px",
                   fontSize: "16px",
                   fontWeight: 700,
                   fontFamily,
+                  boxShadow: "0 4px 20px rgba(124,58,237,0.35)",
                 }}
               >
                 {isBn
