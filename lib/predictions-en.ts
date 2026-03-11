@@ -85,7 +85,7 @@ export const predictionsEn: string[] = [
   "{name}'s bou squeezes his hand in public when angry. Fingers: numb for hours.",
   "{name}'s ice cream? Bou ate it. 'Dieting is important for YOU, not me.'",
   "{name}'s wife's mood changes faster than Dhaka weather. Forecast: unpredictable always.",
-  "{name} hears 'I have headache' every time he wants something. Strategy level: pro.",
+  "{name} hears 'finish your chores first' every time he wants something. Strategy level: pro.",
   "{name}'s bou's punch = Avengers-level damage. His back remembers for weeks.",
   "{name}'s salary day = bou's shopping day. He gets the receipt, she gets everything.",
   "{name} got woken at 5 AM on holiday. 'Kok doriye rakhso? Bazaar koro!' No escape.",

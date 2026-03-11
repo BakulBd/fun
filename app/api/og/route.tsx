@@ -45,13 +45,16 @@ function stripEmoji(s: string): string {
     .trim();
 }
 
-/** Word-wrap text to fit a given character width */
-function wrapText(text: string, maxCharsPerLine: number): string[] {
+/** Word-wrap text to fit a given character width.
+ *  Bengali chars are wider — use a visual-width estimate. */
+function wrapText(text: string, maxCharsPerLine: number, isBengali = false): string[] {
   const words = text.split(/\s+/);
   const lines: string[] = [];
   let current = "";
+  // Bengali glyphs are ~1.4x wider than Latin on average
+  const charWidth = (s: string) => isBengali ? Math.ceil(s.length * 1.35) : s.length;
   for (const w of words) {
-    if (current.length + w.length + 1 > maxCharsPerLine && current) {
+    if (charWidth(current) + charWidth(w) + 1 > maxCharsPerLine && current) {
       lines.push(current);
       current = w;
     } else {
@@ -76,20 +79,30 @@ function buildBengaliSvg(
   prettyName: string,
   text: string,
   nameSize: number,
-  pSize: number,
   fontB64: string
 ): string {
-  const lines = wrapText(text, pSize > 30 ? 42 : 50);
-  const lineHeight = pSize * 1.6;
+  // Dynamic font sizing based on full text length for Bengali
+  const len = text.length;
+  const pSize = len > 200 ? 22 : len > 140 ? 25 : len > 90 ? 28 : 32;
+  const charsPerLine = len > 200 ? 62 : len > 140 ? 55 : len > 90 ? 48 : 40;
+  const lines = wrapText(text, charsPerLine, true);
+  const lineHeight = pSize * 1.55;
 
-  // Dynamic vertical centering for prediction block
-  const predBlockHeight = lines.length * lineHeight;
-  const predStartY = Math.max(260, 330 - predBlockHeight / 2);
+  // Clamp to max visible lines based on available space
+  const maxLines = Math.floor(280 / lineHeight);
+  const visibleLines = lines.slice(0, maxLines);
+  if (lines.length > maxLines) {
+    const last = visibleLines[maxLines - 1];
+    visibleLines[maxLines - 1] = last.replace(/\s*\S+$/, '') + '\u2026';
+  }
+  const predBlockHeight = visibleLines.length * lineHeight;
+  // Center vertically in the available prediction area (y: 180–560)
+  const predStartY = Math.max(200, 370 - predBlockHeight / 2);
 
-  const predLines = lines
+  const predLines = visibleLines
     .map(
       (line, i) =>
-        `<text x="84" y="${predStartY + i * lineHeight}" font-family="BN, sans-serif" font-size="${pSize}" font-weight="bold" fill="#e2e8f0">${i === 0 ? "\u201C" : ""}${esc(line)}${i === lines.length - 1 ? "\u201D" : ""}</text>`
+        `<text x="84" y="${predStartY + i * lineHeight}" font-family="BN, sans-serif" font-size="${pSize}" font-weight="bold" fill="#e2e8f0">${i === 0 ? "\u201C" : ""}${esc(line)}${i === visibleLines.length - 1 ? "\u201D" : ""}</text>`
     )
     .join("\n    ");
 
@@ -187,18 +200,14 @@ export async function GET(req: NextRequest) {
     const isBn = language === "bn";
 
     const clean = stripEmoji(prediction);
-    const maxLen = 130;
-    const text =
-      clean.length > maxLen ? clean.substring(0, maxLen) + "\u2026" : clean;
 
     const nameLen = prettyName.length;
     const nameSize = nameLen > 16 ? 48 : nameLen > 10 ? 56 : 64;
-    const pSize = text.length > 100 ? 28 : text.length > 60 ? 32 : 36;
 
     /* ── Bengali path: sharp SVG → PNG (HarfBuzz text shaping) ── */
     if (isBn) {
       const fontB64 = getBnFontBase64();
-      const svg = buildBengaliSvg(prettyName, text, nameSize, pSize, fontB64);
+      const svg = buildBengaliSvg(prettyName, clean, nameSize, fontB64);
       const pngBuffer = await sharp(Buffer.from(svg))
         .resize(1200, 630)
         .png({ compressionLevel: 6 })
@@ -211,6 +220,14 @@ export async function GET(req: NextRequest) {
     }
 
     /* ── English path: Satori / next-og (fast, works perfectly) ── */
+    // Truncate for English OG card (Satori handles wrapping but keep reasonable)
+    const enMaxLen = 200;
+    const text =
+      clean.length > enMaxLen
+        ? clean.substring(0, enMaxLen) + "\u2026"
+        : clean;
+    const pSize = text.length > 120 ? 26 : text.length > 80 ? 30 : 34;
+
     return new ImageResponse(
       (
         <div
