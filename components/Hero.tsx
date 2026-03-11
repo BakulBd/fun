@@ -2,7 +2,13 @@
 
 import { motion } from "framer-motion";
 
-export default function Hero() {
+interface HeroProps {
+  lang: "en" | "bn";
+}
+
+export default function Hero({ lang }: HeroProps) {
+  const bn = lang === "bn";
+
   return (
     <section className="relative overflow-hidden py-14 md:py-20 text-center">
       {/* Background decorative elements */}
@@ -26,17 +32,31 @@ export default function Hero() {
         </motion.span>
 
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent leading-tight">
-          After Marriage
-          <br />
-          Prediction Generator
+          {bn ? (
+            <>
+              বিয়ের পরের
+              <br />
+              ভবিষ্যদ্বাণী জেনারেটর
+            </>
+          ) : (
+            <>
+              After Marriage
+              <br />
+              Prediction Generator
+            </>
+          )}
         </h1>
 
         <p className="mt-6 text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto px-4">
-          যেকোনো নাম লিখো — বিয়ের পরের ভবিষ্যৎ জেনে নাও! 🤣
+          {bn
+            ? "যেকোনো নাম লিখো — বিয়ের পরের ভবিষ্যৎ জেনে নাও! 🤣"
+            : "Type any name & see their after-marriage future! 🤣"}
           <br />
-          <span className="text-sm text-gray-400">Type any name & see their after-marriage future!</span>
-          <br />
-          <span className="text-pink-500 font-semibold mt-1 inline-block">বন্ধুদের Tag করো — তাদের reaction দেখো! 😂</span>
+          <span className="text-pink-500 font-semibold mt-1 inline-block">
+            {bn
+              ? "বন্ধুদের Tag করো — তাদের reaction দেখো! 😂"
+              : "Tag your friends — watch their reaction! 😂"}
+          </span>
         </p>
 
         <motion.div
@@ -45,7 +65,9 @@ export default function Hero() {
           transition={{ repeat: Infinity, duration: 2 }}
         >
           <span className="text-sm font-bold text-pink-600 dark:text-pink-400">
-            🔥 Already viral with 10,000+ shares!
+            {bn
+              ? "🔥 ইতিমধ্যে ১০,০০০+ শেয়ার হয়েছে!"
+              : "🔥 Already viral with 10,000+ shares!"}
           </span>
         </motion.div>
 

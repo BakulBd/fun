@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { sanitizeName } from "@/lib/sanitize";
 import { getPrediction } from "@/lib/get-prediction";
@@ -21,7 +22,9 @@ export async function generateMetadata({
     return { title: "Not Found" };
   }
 
-  const { prediction, language, name: prettyName } = getPrediction(safeName, lang);
+  const cookieStore = await cookies();
+  const geoLang = cookieStore.get("geo-lang")?.value;
+  const { prediction, language, name: prettyName } = getPrediction(safeName, lang, geoLang);
 
   const title =
     language === "bn"
@@ -71,7 +74,9 @@ export default async function NamePage({ params, searchParams }: PageProps) {
     notFound();
   }
 
-  const { prediction, language, name: prettyName } = getPrediction(safeName, lang);
+  const cookieStore = await cookies();
+  const geoLang = cookieStore.get("geo-lang")?.value;
+  const { prediction, language, name: prettyName } = getPrediction(safeName, lang, geoLang);
 
   return (
     <NamePageClient

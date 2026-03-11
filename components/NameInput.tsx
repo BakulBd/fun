@@ -4,10 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-export default function NameInput() {
+interface NameInputProps {
+  lang: "en" | "bn";
+}
+
+export default function NameInput({ lang }: NameInputProps) {
   const [name, setName] = useState("");
   const [shake, setShake] = useState(false);
   const router = useRouter();
+  const bn = lang === "bn";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +42,11 @@ export default function NameInput() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="তোমার / বন্ধুর নাম লিখো... (Rahim, রাকিব)"
+            placeholder={
+              bn
+                ? "তোমার / বন্ধুর নাম লিখো... (যেমন: রাকিব, Rahim)"
+                : "Enter your / friend's name... (e.g., Rahim)"
+            }
             maxLength={50}
             className="w-full px-6 py-5 text-lg rounded-2xl border-2 border-pink-300 focus:border-pink-500 focus:ring-4 focus:ring-pink-200 outline-none transition-all bg-white dark:bg-gray-900 dark:border-pink-600 dark:focus:ring-pink-800 shadow-lg placeholder:text-gray-400"
           />
@@ -52,12 +61,16 @@ export default function NameInput() {
           whileTap={{ scale: 0.95 }}
           className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white font-bold py-4 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
         >
-          🔮 বিয়ের পরের ভবিষ্যৎ দেখো / See Prediction
+          {bn
+            ? "🔮 বিয়ের পরের ভবিষ্যৎ দেখো!"
+            : "🔮 See After-Marriage Prediction!"}
         </motion.button>
       </form>
 
       <p className="text-center text-sm text-gray-400 mt-3">
-        👇 অথবা নিচের নাম ক্লিক করো / Or click a name below 👇
+        {bn
+          ? "👇 অথবা নিচের নাম ক্লিক করো 👇"
+          : "👇 Or click a name below 👇"}
       </p>
     </motion.section>
   );

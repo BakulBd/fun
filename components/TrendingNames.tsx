@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+interface TrendingNamesProps {
+  lang: "en" | "bn";
+}
+
 const trendingNames = [
   { name: "Rahim", emoji: "🔥" },
   { name: "Sumon", emoji: "⚡" },
@@ -39,7 +43,9 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export default function TrendingNames() {
+export default function TrendingNames({ lang }: TrendingNamesProps) {
+  const bn = lang === "bn";
+
   return (
     <motion.section
       className="max-w-3xl mx-auto px-4 py-12"
@@ -49,11 +55,13 @@ export default function TrendingNames() {
     >
       <h2 className="text-2xl md:text-3xl font-extrabold text-center mb-2">
         <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-          🔥 Try These Names
+          {bn ? "🔥 এই নামগুলো চেষ্টা করো" : "🔥 Try These Names"}
         </span>
       </h2>
       <p className="text-center text-sm text-gray-500 mb-6">
-        Click any name to see their hilarious married life prediction!
+        {bn
+          ? "যেকোনো নামে ক্লিক করো — মজার prediction দেখো!"
+          : "Click any name to see their hilarious married life prediction!"}
       </p>
 
       <motion.div

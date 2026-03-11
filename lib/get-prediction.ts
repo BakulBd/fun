@@ -16,9 +16,10 @@ export interface PredictionResult {
  */
 export function getPrediction(
   name: string,
-  langParam?: string | null
+  langParam?: string | null,
+  geoLang?: string | null
 ): PredictionResult {
-  const language = detectLanguage(name, langParam);
+  const language = detectLanguage(name, langParam, geoLang);
   const predictions = language === "bn" ? predictionsBn : predictionsEn;
   const index = getIndexFromName(name, predictions.length);
   const template = predictions[index];

@@ -36,11 +36,13 @@ const BANGLA_NAMES_EN = new Set([
  * 1. Explicit lang query parameter (?lang=bn or ?lang=en)
  * 2. Bangla Unicode characters in the name
  * 3. Known Bangladeshi names written in English script
- * 4. Default to English
+ * 4. Geo-detected language from cookie (set by middleware via IP/country)
+ * 5. Default to English
  */
 export function detectLanguage(
   name: string,
-  langParam?: string | null
+  langParam?: string | null,
+  geoLang?: string | null
 ): Language {
   // 1. Explicit query parameter
   if (langParam === "bn") return "bn";
@@ -53,6 +55,20 @@ export function detectLanguage(
   const normalized = name.trim().toLowerCase().split(/\s+/);
   if (normalized.some((part) => BANGLA_NAMES_EN.has(part))) return "bn";
 
-  // 4. Default to English
+  // 4. Geo-detected language (from middleware cookie based on IP country)
+  if (geoLang === "bn") return "bn";
+  if (geoLang === "en") return "en";
+
+  // 5. Default to English
+  return "en";
+}
+
+/**
+ * Detect language for the homepage (no name input yet).
+ * Uses geo cookie only.
+ */
+export function detectHomepageLanguage(geoLang?: string | null): Language {
+  if (geoLang === "bn") return "bn";
+  if (geoLang === "en") return "en";
   return "en";
 }
