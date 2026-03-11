@@ -3,29 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { sanitizeName } from "@/lib/sanitize";
 import { getPrediction } from "@/lib/get-prediction";
 import sharp from "sharp";
-import { readFileSync } from "fs";
 import { join } from "path";
 
 export const runtime = "nodejs";
 
-/* ── Bengali font: Noto Sans Bengali Bold (142 KB) ──
-   Static TTF with full conjunct / ligature support.
-   Loaded lazily via readFileSync, cached as base64 for SVG embedding.
+/* ── Bengali font path (NotoSansBengali-Bold, 142 KB) ──
    outputFileTracingIncludes in next.config.ts ensures Vercel bundles it. */
-let _bnFontBase64: string | undefined;
-function getBnFontBase64(): string {
-  if (!_bnFontBase64) {
-    const buf = readFileSync(
-      join(process.cwd(), "app/api/og/fonts/NotoSansBengali-Bold.ttf")
-    );
-    _bnFontBase64 = buf.toString("base64");
-  }
-  return _bnFontBase64;
-}
+const BN_FONT = join(
+  process.cwd(),
+  "app/api/og/fonts/NotoSansBengali-Bold.ttf"
+);
 
 /* ── Helpers ── */
 
-/** XML-escape text for safe SVG embedding */
+/** Escape for XML / Pango markup */
 function esc(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -45,26 +36,6 @@ function stripEmoji(s: string): string {
     .trim();
 }
 
-/** Word-wrap text to fit a given character width.
- *  Bengali chars are wider — use a visual-width estimate. */
-function wrapText(text: string, maxCharsPerLine: number, isBengali = false): string[] {
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let current = "";
-  // Bengali glyphs are ~1.4x wider than Latin on average
-  const charWidth = (s: string) => isBengali ? Math.ceil(s.length * 1.35) : s.length;
-  for (const w of words) {
-    if (charWidth(current) + charWidth(w) + 1 > maxCharsPerLine && current) {
-      lines.push(current);
-      current = w;
-    } else {
-      current = current ? current + " " + w : w;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
-}
-
 const CACHE_HEADERS = {
   "Cache-Control":
     "public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000",
@@ -72,109 +43,97 @@ const CACHE_HEADERS = {
 };
 
 /* ══════════════════════════════════════════════════════════════
-   Bengali OG — rendered via sharp (SVG → PNG)
-   Uses Pango + HarfBuzz for perfect conjunct / matra shaping.
+   Bengali text → transparent PNG via sharp's text API.
+   Uses Pango + HarfBuzz through libvips `fontfile` parameter
+   for direct TTF loading — works on Vercel Lambda and everywhere.
+   No @font-face / librsvg dependency for text shaping.
    ══════════════════════════════════════════════════════════════ */
-function buildBengaliSvg(
-  prettyName: string,
+async function renderBnText(
   text: string,
-  nameSize: number,
-  fontB64: string
-): string {
-  // Dynamic font sizing based on full text length for Bengali
-  const len = text.length;
-  const pSize = len > 200 ? 22 : len > 140 ? 25 : len > 90 ? 28 : 32;
-  const charsPerLine = len > 200 ? 62 : len > 140 ? 55 : len > 90 ? 48 : 40;
-  const lines = wrapText(text, charsPerLine, true);
-  const lineHeight = pSize * 1.55;
+  color: string,
+  sizePt: number,
+  opts?: { width?: number; maxHeight?: number; spacing?: number }
+): Promise<Buffer> {
+  let markup = `<span foreground="${color}"`;
+  if (opts?.spacing) markup += ` letter_spacing="${opts.spacing}"`;
+  markup += `>${esc(text)}</span>`;
 
-  // Clamp to max visible lines based on available space
-  const maxLines = Math.floor(280 / lineHeight);
-  const visibleLines = lines.slice(0, maxLines);
-  if (lines.length > maxLines) {
-    const last = visibleLines[maxLines - 1];
-    visibleLines[maxLines - 1] = last.replace(/\s*\S+$/, '') + '\u2026';
+  let buf = await sharp({
+    text: {
+      text: markup,
+      fontfile: BN_FONT,
+      font: `Noto Sans Bengali Bold ${sizePt}`,
+      rgba: true,
+      dpi: 72,
+      ...(opts?.width ? { width: opts.width } : {}),
+    },
+  })
+    .png()
+    .toBuffer();
+
+  // Crop height if it exceeds maxHeight
+  if (opts?.maxHeight) {
+    const meta = await sharp(buf).metadata();
+    if (meta.height && meta.height > opts.maxHeight) {
+      buf = await sharp(buf)
+        .extract({ left: 0, top: 0, width: meta.width!, height: opts.maxHeight })
+        .png()
+        .toBuffer();
+    }
   }
-  const predBlockHeight = visibleLines.length * lineHeight;
-  // Center vertically in the available prediction area (y: 180–560)
-  const predStartY = Math.max(200, 370 - predBlockHeight / 2);
 
-  const predLines = visibleLines
-    .map(
-      (line, i) =>
-        `<text x="84" y="${predStartY + i * lineHeight}" font-family="BN, sans-serif" font-size="${pSize}" font-weight="bold" fill="#e2e8f0">${i === 0 ? "\u201C" : ""}${esc(line)}${i === visibleLines.length - 1 ? "\u201D" : ""}</text>`
-    )
-    .join("\n    ");
+  return buf;
+}
 
+/** Decorative background SVG — no Bengali text, just shapes & gradients */
+function buildBgSvg(
+  nameSize: number,
+  predTop: number,
+  predH: number
+): string {
   return `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <style>
-      @font-face {
-        font-family: 'BN';
-        src: url(data:font/truetype;base64,${fontB64}) format('truetype');
-        font-weight: bold;
-      }
-    </style>
-    <linearGradient id="accent" x1="0" y1="0" x2="1200" y2="0">
+    <linearGradient id="a" x1="0" y1="0" x2="1200" y2="0">
       <stop offset="0%" stop-color="#7c3aed"/>
       <stop offset="30%" stop-color="#a855f7"/>
       <stop offset="60%" stop-color="#ec4899"/>
       <stop offset="85%" stop-color="#f97316"/>
       <stop offset="100%" stop-color="#eab308"/>
     </linearGradient>
-    <linearGradient id="leftbar" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="lb" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#a855f7"/>
       <stop offset="100%" stop-color="#ec4899"/>
     </linearGradient>
-    <linearGradient id="cta" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="ct" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#7c3aed"/>
       <stop offset="100%" stop-color="#a855f7"/>
     </linearGradient>
-    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="br" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#7c3aed"/>
       <stop offset="100%" stop-color="#ec4899"/>
     </linearGradient>
-    <radialGradient id="glow1" cx="0" cy="0" r="1">
+    <radialGradient id="g1" cx="0" cy="0" r="1">
       <stop offset="0%" stop-color="rgba(124,58,237,0.18)"/>
       <stop offset="70%" stop-color="transparent"/>
     </radialGradient>
-    <radialGradient id="glow2" cx="1" cy="1" r="1">
+    <radialGradient id="g2" cx="1" cy="1" r="1">
       <stop offset="0%" stop-color="rgba(236,72,153,0.13)"/>
       <stop offset="70%" stop-color="transparent"/>
     </radialGradient>
   </defs>
-
-  <!-- Background -->
   <rect width="1200" height="630" fill="#0a0a0a"/>
-
-  <!-- Ambient glows -->
-  <circle cx="160" cy="100" r="250" fill="url(#glow1)"/>
-  <circle cx="1060" cy="530" r="230" fill="url(#glow2)"/>
-
-  <!-- Top accent bar -->
-  <rect y="0" width="1200" height="5" fill="url(#accent)"/>
-
-  <!-- Name -->
-  <text x="60" y="${nameSize + 44}" font-family="BN, sans-serif" font-size="${nameSize}" font-weight="bold" fill="white">${esc(prettyName)}</text>
-
-  <!-- Badge: বিয়ের পরে -->
-  <rect x="60" y="${nameSize + 60}" width="160" height="32" rx="6" fill="rgba(124,58,237,0.18)" stroke="rgba(139,92,246,0.3)" stroke-width="1"/>
-  <text x="72" y="${nameSize + 82}" font-family="BN, sans-serif" font-size="14" font-weight="bold" fill="#c4b5fd" letter-spacing="3">\u09AC\u09BF\u09AF\u09BC\u09C7\u09B0 \u09AA\u09B0\u09C7</text>
-
-  <!-- Left accent bar for prediction -->
-  <rect x="60" y="${predStartY - pSize}" width="4" height="${predBlockHeight + 10}" rx="2" fill="url(#leftbar)"/>
-
-  <!-- Prediction text -->
-  ${predLines}
-
-  <!-- Footer: Brand -->
-  <rect x="60" y="574" width="32" height="32" rx="8" fill="url(#brand)"/>
-  <text x="68" y="596" font-family="sans-serif" font-size="13" font-weight="bold" fill="white">MP</text>
-  <text x="102" y="596" font-family="sans-serif" font-size="17" font-weight="bold" fill="#64748b">familys.tech</text>
-
-  <!-- CTA pill -->
-  <rect x="920" y="572" width="230" height="38" rx="19" fill="url(#cta)"/>
-  <text x="944" y="598" font-family="BN, sans-serif" font-size="16" font-weight="bold" fill="white">\u09A4\u09CB\u09AE\u09BE\u09B0 \u09A8\u09BE\u09AE \u09A6\u09BF\u09AF\u09BC\u09C7 \u09A6\u09C7\u0996\u09CB</text>
+  <circle cx="160" cy="100" r="250" fill="url(#g1)"/>
+  <circle cx="1060" cy="530" r="230" fill="url(#g2)"/>
+  <rect y="0" width="1200" height="5" fill="url(#a)"/>
+  <rect x="60" y="${nameSize + 60}" width="160" height="32" rx="6"
+        fill="rgba(124,58,237,0.18)" stroke="rgba(139,92,246,0.3)" stroke-width="1"/>
+  <rect x="60" y="${predTop - 10}" width="4" height="${predH + 20}" rx="2" fill="url(#lb)"/>
+  <rect x="60" y="574" width="32" height="32" rx="8" fill="url(#br)"/>
+  <text x="68" y="596" font-family="sans-serif" font-size="13"
+        font-weight="bold" fill="white">MP</text>
+  <text x="102" y="596" font-family="sans-serif" font-size="17"
+        font-weight="bold" fill="#64748b">familys.tech</text>
+  <rect x="920" y="572" width="230" height="38" rx="19" fill="url(#ct)"/>
 </svg>`;
 }
 
@@ -204,12 +163,52 @@ export async function GET(req: NextRequest) {
     const nameLen = prettyName.length;
     const nameSize = nameLen > 16 ? 48 : nameLen > 10 ? 56 : 64;
 
-    /* ── Bengali path: sharp SVG → PNG (HarfBuzz text shaping) ── */
+    /* ── Bengali path: sharp text API (Pango + HarfBuzz via fontfile) ── */
     if (isBn) {
-      const fontB64 = getBnFontBase64();
-      const svg = buildBengaliSvg(prettyName, clean, nameSize, fontB64);
-      const pngBuffer = await sharp(Buffer.from(svg))
+      const len = clean.length;
+      const pSize = len > 200 ? 22 : len > 140 ? 25 : len > 90 ? 28 : 32;
+
+      // 1. Render prediction text (Pango auto-wraps at width)
+      const predImg = await renderBnText(
+        `\u201C${clean}\u201D`,
+        "#e2e8f0",
+        pSize,
+        { width: 1050, maxHeight: 350 }
+      );
+      const predMeta = await sharp(predImg).metadata();
+      const predH = predMeta.height || 100;
+      const predTop = Math.max(190, Math.floor(370 - predH / 2));
+
+      // 2. Render name
+      const nameImg = await renderBnText(prettyName, "white", nameSize, {
+        width: 1080,
+      });
+
+      // 3. Render badge "বিয়ের পরে"
+      const badgeImg = await renderBnText(
+        "\u09AC\u09BF\u09AF\u09BC\u09C7\u09B0 \u09AA\u09B0\u09C7",
+        "#c4b5fd",
+        14,
+        { spacing: 3000 }
+      );
+
+      // 4. Render CTA "তোমার নাম দিয়ে দেখো"
+      const ctaImg = await renderBnText(
+        "\u09A4\u09CB\u09AE\u09BE\u09B0 \u09A8\u09BE\u09AE \u09A6\u09BF\u09AF\u09BC\u09C7 \u09A6\u09C7\u0996\u09CB",
+        "white",
+        16
+      );
+
+      // 5. Build decorative background SVG + composite all text layers
+      const bgSvg = buildBgSvg(nameSize, predTop, predH);
+      const pngBuffer = await sharp(Buffer.from(bgSvg))
         .resize(1200, 630)
+        .composite([
+          { input: nameImg, top: 44, left: 60 },
+          { input: badgeImg, top: nameSize + 66, left: 72 },
+          { input: predImg, top: predTop, left: 84 },
+          { input: ctaImg, top: 580, left: 944 },
+        ])
         .png({ compressionLevel: 6 })
         .toBuffer();
 
