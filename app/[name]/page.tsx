@@ -28,19 +28,13 @@ export async function generateMetadata({
   const geoLang = cookieStore.get("geo-lang")?.value;
   const { prediction, language, gender, name: prettyName } = getPrediction(safeName, lang, geoLang);
 
-  // Strip emojis from prediction for clean OG text
+  // Strip emojis for clean OG title
   const cleanPrediction = prediction
     .replace(/[\u{1F600}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
     .trim();
 
-  // OG title = viral clickbait — this hooks people to click
+  // OG title = the actual meme prediction text
   const ogTitle =
-    language === "bn"
-      ? `😂 ${prettyName} ভাইরাল হয়ে গেছে!`
-      : `😂 ${prettyName} just went viral!`;
-
-  // OG description = the actual meme prediction text — shows on Facebook preview card
-  const ogDescription =
     cleanPrediction.length > 150
       ? cleanPrediction.substring(0, 147) + "..."
       : cleanPrediction;
@@ -62,7 +56,7 @@ export async function generateMetadata({
     },
     openGraph: {
       title: ogTitle,
-      description: ogDescription,
+      description: "",
       url: pageUrl,
       images: [
         {
@@ -74,13 +68,12 @@ export async function generateMetadata({
         },
       ],
       type: "website",
-      siteName: "After Marriage Prediction",
-      locale: language === "bn" ? "bn_BD" : "en_US",
+      siteName: "familys.tech",
     },
     twitter: {
       card: "summary_large_image",
       title: ogTitle,
-      description: ogDescription,
+      description: "",
       images: [ogImageUrl],
     },
   };

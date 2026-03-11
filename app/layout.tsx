@@ -40,11 +40,10 @@ export const metadata: Metadata = {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "After Marriage Prediction — Make a Meme About Anyone's Married Life",
-    description: "Type any name and get a hilarious after-marriage prediction! Share with friends and watch their reaction.",
+    title: "Type any name and see what happens after marriage!",
+    description: "",
     type: "website",
-    siteName: "After Marriage Prediction",
-    locale: "en_US",
+    siteName: "familys.tech",
     url: siteUrl,
     images: [
       {
@@ -58,8 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "After Marriage Prediction — Make a Meme About Anyone's Married Life",
-    description: "Type any name and get a hilarious after-marriage prediction! Share with friends.",
+    title: "Type any name and see what happens after marriage!",
+    description: "",
     images: [`${siteUrl}/api/og?name=Friend`],
   },
 };

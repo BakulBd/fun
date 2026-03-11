@@ -23,14 +23,11 @@ export async function GET(req: NextRequest) {
       .replace(/[\u{1F600}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
       .trim();
 
-    const maxLen = 140;
+    const maxLen = 120;
     const displayPrediction =
       cleanPrediction.length > maxLen
         ? cleanPrediction.substring(0, maxLen) + "..."
         : cleanPrediction;
-
-    const subtitle =
-      language === "bn" ? "বিয়ের পরের ভবিষ্যদ্বাণী" : "After Marriage Prediction";
 
     return new ImageResponse(
       (
@@ -40,119 +37,128 @@ export async function GET(req: NextRequest) {
             height: "100%",
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #c026d3 100%)",
-            padding: "40px",
+            background: "#0f0f0f",
             fontFamily: "sans-serif",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
+          {/* Accent gradient bar at top */}
+          <div
+            style={{
+              display: "flex",
+              width: "100%",
+              height: "6px",
+              background: "linear-gradient(90deg, #7c3aed, #ec4899, #f59e0b)",
+            }}
+          />
+
+          {/* Main content */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "white",
-              borderRadius: "24px",
-              padding: "40px 52px",
-              maxWidth: "1080px",
-              width: "100%",
-              height: "100%",
+              flex: 1,
+              padding: "48px 60px 36px",
+              justifyContent: "space-between",
             }}
           >
-            {/* Subtitle */}
+            {/* Top: Name */}
             <div
               style={{
                 display: "flex",
-                fontSize: "20px",
-                fontWeight: 700,
-                color: "#7c3aed",
-                textTransform: "uppercase",
-                letterSpacing: "2px",
-                marginBottom: "8px",
-              }}
-            >
-              {subtitle}
-            </div>
-
-            {/* Name */}
-            <div
-              style={{
-                fontSize: "64px",
-                fontWeight: 900,
-                color: "#1e1b4b",
-                textAlign: "center",
-                lineHeight: 1.1,
-                marginBottom: "20px",
-              }}
-            >
-              {prettyName}
-            </div>
-
-            {/* Divider */}
-            <div
-              style={{
-                display: "flex",
-                width: "80px",
-                height: "4px",
-                background: "linear-gradient(90deg, #7c3aed, #c026d3)",
-                borderRadius: "2px",
-                marginBottom: "20px",
-              }}
-            />
-
-            {/* Prediction text */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#f5f3ff",
-                borderRadius: "16px",
-                padding: "24px 32px",
-                width: "100%",
-                flex: 1,
+                flexDirection: "column",
               }}
             >
               <div
                 style={{
-                  fontSize: "28px",
-                  fontWeight: 700,
-                  textAlign: "center",
-                  color: "#1e1b4b",
-                  lineHeight: 1.5,
+                  display: "flex",
+                  fontSize: "72px",
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  lineHeight: 1,
+                  letterSpacing: "-2px",
                 }}
               >
-                &ldquo;{displayPrediction}&rdquo;
+                {prettyName}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: "20px",
+                  fontWeight: 600,
+                  color: "#a78bfa",
+                  marginTop: "8px",
+                  textTransform: "uppercase",
+                  letterSpacing: "3px",
+                }}
+              >
+                {language === "bn" ? "\u09AC\u09BF\u09AF\u09BC\u09C7\u09B0 \u09AA\u09B0\u09C7" : "AFTER MARRIAGE"}
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Center: Prediction */}
+            <div
+              style={{
+                display: "flex",
+                fontSize: "36px",
+                fontWeight: 700,
+                color: "#e2e8f0",
+                lineHeight: 1.4,
+                maxWidth: "1000px",
+              }}
+            >
+              \u201C{displayPrediction}\u201D
+            </div>
+
+            {/* Bottom: Branding */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 width: "100%",
-                marginTop: "16px",
               }}
             >
-              <div style={{ fontSize: "18px", color: "#6b7280", fontWeight: 600 }}>
-                familys.tech
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                    fontWeight: 900,
+                    color: "white",
+                  }}
+                >
+                  MP
+                </div>
+                <div style={{ fontSize: "22px", fontWeight: 700, color: "#94a3b8" }}>
+                  familys.tech
+                </div>
               </div>
               <div
                 style={{
                   display: "flex",
                   background: "#7c3aed",
                   color: "white",
-                  padding: "8px 20px",
+                  padding: "10px 28px",
                   borderRadius: "50px",
-                  fontSize: "16px",
+                  fontSize: "18px",
                   fontWeight: 700,
                 }}
               >
-                {language === "bn" ? "তোমার নাম দিয়ে দেখো" : "Try YOUR name"}
+                {language === "bn" ? "\u09A4\u09CB\u09AE\u09BE\u09B0 \u09A8\u09BE\u09AE \u09A6\u09BF\u09AF\u09BC\u09C7 \u09A6\u09C7\u0996\u09CB" : "Try YOUR name"}
               </div>
             </div>
           </div>
