@@ -26,6 +26,17 @@ const FONT_NAME = "NotoSansBengali-Bold.ttf";
 const FONT_TMP = `/tmp/${FONT_NAME}`;
 const FC_CONF = "/tmp/og-fonts.conf";
 
+/* English font for Satori/ImageResponse */
+const EN_FONT_NAME = "Inter-Bold.ttf";
+let _enFontData: ArrayBuffer | null = null;
+function getEnFont(): ArrayBuffer {
+  if (_enFontData) return _enFontData;
+  const src = join(process.cwd(), "app/api/og/fonts", EN_FONT_NAME);
+  const buf = readFileSync(src);
+  _enFontData = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+  return _enFontData;
+}
+
 let _fontReady = false;
 function ensureBnFont(): string {
   if (_fontReady) return FONT_TMP;
@@ -325,7 +336,9 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    /* ── English path: Satori / next-og (fast, works perfectly) ── */
+    /* ── English path: Satori / next-og with bundled Inter Bold ── */
+    const enFontData = getEnFont();
+
     // Truncate for English OG card (Satori handles wrapping but keep reasonable)
     const enMaxLen = 200;
     const text =
@@ -343,7 +356,7 @@ export async function GET(req: NextRequest) {
             display: "flex",
             flexDirection: "column",
             background: "#0a0a0a",
-            fontFamily: "sans-serif",
+            fontFamily: "Inter",
             position: "relative",
             overflow: "hidden",
           }}
@@ -546,6 +559,14 @@ export async function GET(req: NextRequest) {
       {
         width: 1200,
         height: 630,
+        fonts: [
+          {
+            name: "Inter",
+            data: enFontData,
+            weight: 700,
+            style: "normal",
+          },
+        ],
         headers: {
           "Cache-Control":
             "public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000",
