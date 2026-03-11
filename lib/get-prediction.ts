@@ -15,6 +15,17 @@ export interface PredictionResult {
 }
 
 /**
+ * Easter-egg predictions for the creator.
+ * Keyed by lowercase name → { en, bn }
+ */
+const SPECIAL_PREDICTIONS: Record<string, { en: string; bn: string }> = {
+  bakul: {
+    en: "{name} will marry the most beautiful soul on earth. People will remember them as the couple that proved love stories are real. Blessed life, legendary bond.",
+    bn: "{name} পৃথিবীর সবচেয়ে সুন্দর মনের মানুষকে বিয়ে করবে। মানুষ তাদের দেখে বলবে — এই জুটি প্রমাণ করেছে যে সত্যিকারের ভালোবাসা এখনো আছে। কিংবদন্তি জুটি।",
+  },
+};
+
+/**
  * Get a deterministic prediction for a given name.
  * Uses the raw name for hashing (consistency) but the display name in the output text.
  * Selects gender-appropriate predictions (wife jokes for males, husband jokes for females).
@@ -26,6 +37,15 @@ export function getPrediction(
 ): PredictionResult {
   const language = detectLanguage(name, langParam, geoLang);
   const gender = detectGender(name);
+  const prettyName = displayName(name);
+
+  // Check for special easter-egg names first
+  const special = SPECIAL_PREDICTIONS[name.toLowerCase().trim()];
+  if (special) {
+    const template = language === "bn" ? special.bn : special.en;
+    const prediction = template.replace(/\{name\}/g, prettyName);
+    return { prediction, language, gender, name: prettyName };
+  }
 
   // Pick the right prediction set based on language + gender
   let predictions: string[];
@@ -37,7 +57,6 @@ export function getPrediction(
 
   const index = getIndexFromName(name, predictions.length);
   const template = predictions[index];
-  const prettyName = displayName(name);
   const prediction = template.replace(/\{name\}/g, prettyName);
 
   return { prediction, language, gender, name: prettyName };
