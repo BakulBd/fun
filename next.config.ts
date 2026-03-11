@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Include Bengali font in the serverless function bundle on Vercel
+  outputFileTracingIncludes: {
+    "/api/og": ["./app/api/og/fonts/**/*"],
+  },
   // Ensure proper image optimization
   images: {
     unoptimized: false,
