@@ -5,6 +5,8 @@ import { sanitizeName } from "@/lib/sanitize";
 import { getPrediction } from "@/lib/get-prediction";
 import NamePageClient from "./client";
 
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://fun-marriage.vercel.app").replace(/\/+$/, "");
+
 interface PageProps {
   params: Promise<{ name: string }>;
   searchParams: Promise<{ lang?: string }>;
@@ -49,15 +51,19 @@ export async function generateMetadata({
       ? `${prettyName} এর বিবাহিত জীবনের ভবিষ্যদ্বাণী`
       : `${prettyName}'s Married Life Prediction`;
 
-  const ogImageUrl = `/api/og?name=${encodeURIComponent(safeName)}${lang ? `&lang=${lang}` : ""}`;
+  const pageUrl = `${siteUrl}/${encodeURIComponent(safeName)}`;
+  const ogImageUrl = `${siteUrl}/api/og?name=${encodeURIComponent(safeName)}${lang ? `&lang=${lang}` : ""}`;
 
   return {
     title: pageTitle,
     description: prediction,
+    alternates: {
+      canonical: pageUrl,
+    },
     openGraph: {
       title: ogTitle,
       description: ogDescription,
-      url: `/${encodeURIComponent(safeName)}`,
+      url: pageUrl,
       images: [
         {
           url: ogImageUrl,
@@ -69,6 +75,7 @@ export async function generateMetadata({
       ],
       type: "website",
       siteName: "After Marriage Prediction",
+      locale: language === "bn" ? "bn_BD" : "en_US",
     },
     twitter: {
       card: "summary_large_image",

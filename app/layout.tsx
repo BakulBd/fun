@@ -36,15 +36,19 @@ export const metadata: Metadata = {
     "biye prediction",
     "বিয়ে prediction",
   ],
+  alternates: {
+    canonical: siteUrl,
+  },
   openGraph: {
     title: "After Marriage Prediction — Make a Meme About Anyone's Married Life",
     description: "Type any name and get a hilarious after-marriage prediction! Share with friends and watch their reaction.",
     type: "website",
     siteName: "After Marriage Prediction",
+    locale: "en_US",
     url: siteUrl,
     images: [
       {
-        url: "/api/og?name=Friend",
+        url: `${siteUrl}/api/og?name=Friend`,
         width: 1200,
         height: 630,
         alt: "After Marriage Prediction Generator",
@@ -56,7 +60,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "After Marriage Prediction — Make a Meme About Anyone's Married Life",
     description: "Type any name and get a hilarious after-marriage prediction! Share with friends.",
-    images: ["/api/og?name=Friend"],
+    images: [`${siteUrl}/api/og?name=Friend`],
   },
 };
 
