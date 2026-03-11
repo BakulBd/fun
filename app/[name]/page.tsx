@@ -46,7 +46,7 @@ export async function generateMetadata({
       : `${prettyName}'s Married Life Prediction`;
 
   const pageUrl = `${siteUrl}/${encodeURIComponent(safeName)}`;
-  const ogImageUrl = `${siteUrl}/api/og?name=${encodeURIComponent(safeName)}${lang ? `&lang=${lang}` : ""}`;
+  const ogImageUrl = `${siteUrl}/api/og?name=${encodeURIComponent(safeName)}&lang=${language}`;
 
   return {
     title: pageTitle,
@@ -58,6 +58,7 @@ export async function generateMetadata({
       title: ogTitle,
       description: "",
       url: pageUrl,
+      locale: language === "bn" ? "bn_BD" : "en_US",
       images: [
         {
           url: ogImageUrl,
