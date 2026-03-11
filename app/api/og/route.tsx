@@ -1,13 +1,16 @@
-import { ImageResponse } from "@vercel/og";
+import { ImageResponse } from "next/og";
 import { NextRequest, NextResponse } from "next/server";
 import { sanitizeName } from "@/lib/sanitize";
 import { getPrediction } from "@/lib/get-prediction";
 
 export const runtime = "edge";
 
-/* ── Bangla font: bundled TTF, loaded once per cold start ── */
-const banglaFontData = fetch(
-  new URL("./fonts/NotoSansBengali-Bold.ttf", import.meta.url)
+/* ── Bengali font: Hind Siliguri Bold (251 KB) ──
+   Bundled at build time → zero runtime network calls.
+   Registered for weights 400, 700, 900 so Satori never falls back to system
+   font for Bengali glyphs. */
+const bnFontData = fetch(
+  new URL("./fonts/HindSiliguri-Bold.ttf", import.meta.url)
 ).then((r) => r.arrayBuffer());
 
 export async function GET(req: NextRequest) {
@@ -36,27 +39,33 @@ export async function GET(req: NextRequest) {
       )
       .trim();
 
-    const maxLen = 140;
+    const maxLen = 130;
     const text =
       clean.length > maxLen ? clean.substring(0, maxLen) + "\u2026" : clean;
 
-    // Dynamic font size — shorter → bigger
-    const pSize = text.length > 100 ? 28 : text.length > 60 ? 32 : 38;
-    // Dynamic name size for very long names
-    const nameSize =
-      prettyName.length > 14 ? 52 : prettyName.length > 9 ? 60 : 68;
+    // Dynamic sizing
+    const pSize = text.length > 100 ? 28 : text.length > 60 ? 32 : 36;
+    const nameLen = prettyName.length;
+    const nameSize = nameLen > 16 ? 48 : nameLen > 10 ? 56 : 64;
 
-    // Build fonts array — always load Bangla for Bangla text
-    const fonts: { name: string; data: ArrayBuffer; weight: 400 | 700; style: "normal" }[] =
-      [];
+    // Build fonts — register Bengali font for ALL weights so Satori always uses it
+    const fonts: {
+      name: string;
+      data: ArrayBuffer;
+      weight: 400 | 700 | 900;
+      style: "normal";
+    }[] = [];
+
     if (isBn) {
-      fonts.push({
-        name: "NotoSansBengali",
-        data: await banglaFontData,
-        weight: 700,
-        style: "normal",
-      });
+      const fd = await bnFontData;
+      fonts.push(
+        { name: "BN", data: fd, weight: 400, style: "normal" },
+        { name: "BN", data: fd, weight: 700, style: "normal" },
+        { name: "BN", data: fd, weight: 900, style: "normal" }
+      );
     }
+
+    const fontFamily = isBn ? "BN, sans-serif" : "sans-serif";
 
     return new ImageResponse(
       (
@@ -67,40 +76,41 @@ export async function GET(req: NextRequest) {
             display: "flex",
             flexDirection: "column",
             background: "#0a0a0a",
-            fontFamily: isBn ? "NotoSansBengali, sans-serif" : "sans-serif",
+            fontFamily,
             position: "relative",
             overflow: "hidden",
           }}
         >
-          {/* Glow effects */}
+          {/* Top-left glow */}
           <div
             style={{
               display: "flex",
               position: "absolute",
-              top: "-80px",
-              left: "-40px",
-              width: "400px",
-              height: "400px",
+              top: "-100px",
+              left: "-60px",
+              width: "420px",
+              height: "420px",
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%)",
+                "radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)",
             }}
           />
+          {/* Bottom-right glow */}
           <div
             style={{
               display: "flex",
               position: "absolute",
-              bottom: "-60px",
-              right: "-30px",
-              width: "350px",
-              height: "350px",
+              bottom: "-80px",
+              right: "-40px",
+              width: "380px",
+              height: "380px",
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, rgba(236,72,153,0.08) 0%, transparent 70%)",
+                "radial-gradient(circle, rgba(236,72,153,0.1) 0%, transparent 70%)",
             }}
           />
 
-          {/* Accent gradient bar */}
+          {/* Gradient accent bar */}
           <div
             style={{
               display: "flex",
@@ -117,20 +127,21 @@ export async function GET(req: NextRequest) {
               display: "flex",
               flexDirection: "column",
               flex: 1,
-              padding: "40px 56px 28px",
+              padding: "40px 56px 30px",
               justifyContent: "space-between",
             }}
           >
-            {/* Top: Name + tag */}
+            {/* Header: Name + Badge */}
             <div style={{ display: "flex", flexDirection: "column" }}>
               <div
                 style={{
                   display: "flex",
                   fontSize: `${nameSize}px`,
-                  fontWeight: 900,
+                  fontWeight: 700,
                   color: "#ffffff",
-                  lineHeight: 1.1,
+                  lineHeight: 1.15,
                   letterSpacing: "-1px",
+                  fontFamily,
                 }}
               >
                 {prettyName}
@@ -139,15 +150,16 @@ export async function GET(req: NextRequest) {
                 <div
                   style={{
                     display: "flex",
-                    fontSize: "15px",
+                    fontSize: "14px",
                     fontWeight: 700,
                     color: "#c4b5fd",
                     textTransform: "uppercase",
                     letterSpacing: "4px",
-                    background: "rgba(124,58,237,0.18)",
-                    border: "1px solid rgba(124,58,237,0.3)",
-                    padding: "5px 14px",
+                    background: "rgba(124,58,237,0.2)",
+                    border: "1px solid rgba(139,92,246,0.35)",
+                    padding: "5px 16px",
                     borderRadius: "6px",
+                    fontFamily,
                   }}
                 >
                   {isBn
@@ -157,15 +169,16 @@ export async function GET(req: NextRequest) {
               </div>
             </div>
 
-            {/* Center: Prediction */}
+            {/* Prediction text */}
             <div
               style={{
                 display: "flex",
                 fontSize: `${pSize}px`,
                 fontWeight: 700,
                 color: "#e2e8f0",
-                lineHeight: 1.45,
+                lineHeight: 1.5,
                 maxWidth: "1020px",
+                fontFamily,
               }}
             >
               {"\u201C"}
@@ -173,7 +186,7 @@ export async function GET(req: NextRequest) {
               {"\u201D"}
             </div>
 
-            {/* Bottom: Branding */}
+            {/* Footer */}
             <div
               style={{
                 display: "flex",
@@ -182,7 +195,7 @@ export async function GET(req: NextRequest) {
                 width: "100%",
               }}
             >
-              {/* Left: Logo + domain */}
+              {/* Brand */}
               <div
                 style={{
                   display: "flex",
@@ -196,11 +209,12 @@ export async function GET(req: NextRequest) {
                     width: "30px",
                     height: "30px",
                     borderRadius: "6px",
-                    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+                    background:
+                      "linear-gradient(135deg, #7c3aed, #ec4899)",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "13px",
-                    fontWeight: 900,
+                    fontWeight: 700,
                     color: "white",
                   }}
                 >
@@ -217,16 +231,18 @@ export async function GET(req: NextRequest) {
                 </div>
               </div>
 
-              {/* Right: CTA */}
+              {/* CTA */}
               <div
                 style={{
                   display: "flex",
-                  background: "linear-gradient(135deg, #7c3aed, #9333ea)",
+                  background:
+                    "linear-gradient(135deg, #7c3aed, #9333ea)",
                   color: "white",
-                  padding: "9px 28px",
+                  padding: "9px 26px",
                   borderRadius: "50px",
-                  fontSize: "17px",
-                  fontWeight: 800,
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  fontFamily,
                 }}
               >
                 {isBn
@@ -240,7 +256,7 @@ export async function GET(req: NextRequest) {
       {
         width: 1200,
         height: 630,
-        ...(fonts.length > 0 ? { fonts } : {}),
+        fonts: fonts.length > 0 ? fonts : undefined,
         headers: {
           "Cache-Control":
             "public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000",
