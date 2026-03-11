@@ -19,7 +19,7 @@ const siteUrl = rawUrl.replace(/\/+$/, "");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "After Marriage Prediction Generator 😂 | Funny Meme Generator",
+  title: "After Marriage Prediction Generator | Funny Meme Generator",
   description:
     "Generate hilarious after-marriage predictions for any name! Share funny meme-style predictions with friends on social media. Supports Bangla & English!",
   keywords: [
@@ -33,8 +33,8 @@ export const metadata: Metadata = {
     "বিয়ে prediction",
   ],
   openGraph: {
-    title: "😂 Make a Meme About Anyone's Married Life!",
-    description: "Type any name and get a hilarious after-marriage prediction! Share with friends and watch their reaction 🤣",
+    title: "After Marriage Prediction — Make a Meme About Anyone's Married Life",
+    description: "Type any name and get a hilarious after-marriage prediction! Share with friends and watch their reaction.",
     type: "website",
     siteName: "After Marriage Prediction",
     url: siteUrl,
@@ -43,15 +43,15 @@ export const metadata: Metadata = {
         url: "/api/og?name=Friend",
         width: 1200,
         height: 630,
-        alt: "After Marriage Prediction Generator - Make funny memes!",
+        alt: "After Marriage Prediction Generator",
         type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "😂 Make a Meme About Anyone's Married Life!",
-    description: "Type any name and get a hilarious after-marriage prediction! Share with friends 🤣",
+    title: "After Marriage Prediction — Make a Meme About Anyone's Married Life",
+    description: "Type any name and get a hilarious after-marriage prediction! Share with friends.",
     images: ["/api/og?name=Friend"],
   },
 };
