@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   title: "After Marriage Prediction Generator | Funny Meme Generator",
   description:
     "Generate hilarious after-marriage predictions for any name! Share funny meme-style predictions with friends on social media. Supports Bangla & English!",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-icon.svg",
+  },
   keywords: [
     "marriage prediction",
     "funny meme generator",

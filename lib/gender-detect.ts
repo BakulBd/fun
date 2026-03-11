@@ -98,6 +98,9 @@ const MALE_NAMES = new Set([
   "nahidul", "habibur", "mizanur", "obaidur", "aminul", "mominul", "hasanul",
   "shamsul", "saifur", "atikur", "monirul", "fazlul", "mostafiz", "mahmudul",
   "mushfiqur", "mustafiz", "mashrafi", "tamim", "taskin", "miraz", "shoriful",
+  // BD male names ending in -a (key disambiguation vs female -a heuristic)
+  "mostofa", "mustafa", "mostafa", "musa", "rana", "hamza", "reza",
+  "taha", "isa", "esa", "mirza", "huzefa", "shifa", "tipu",
 ]);
 
 /**
@@ -128,30 +131,23 @@ const BANGLA_MALE_NAMES = [
  * These patterns indicate likely female names.
  */
 const FEMALE_SUFFIXES = [
-  "ina", "ima", "ita", "ita", "uma", "ala", "ela", "ila", "ula",
-  "ana", "ena", "ona", "una", "ema", "ama", "umi", "ani",
-  "ati", "oti", "uti", "abi", "ubi", "uri", "sri",
-  "mina", "nina", "bina", "dina", "rina", "tina", "lina", "sina",
-  "hida", "mida", "nida", "rida", "sida",
-  "kha", "sha", "tha",
-  "eya", "iya", "uya", "aya",
-  "een", "reen", "hin",
+  "ina", "ima", "ita", "uma",
+  "mina", "nina", "bina", "dina", "rina", "tina", "lina",
+  "hida", "mida", "nida", "rida",
+  "eya", "iya", "aya",
+  "een", "reen",
 ];
 
 /**
  * Suffix patterns that strongly indicate male names.
  */
 const MALE_SUFFIXES = [
-  "ul", "ur", "uddin", "ullah", "uzzaman", "alam",
+  "uddin", "ullah", "uzzaman", "alam",
   "udding", "uzzama", "uzaman",
-  "dul", "bul", "ful", "gul", "sul", "mul", "nul",
-  "hed", "had", "hid", "shad", "shed",
-  "ik", "aq", "eq", "ook", "eek",
-  "im", "om",
-  "ab", "ib", "eb", "ob", "ub",
-  "az", "iz", "uz", "oz",
-  "an", "on",
-  "er", "ar", "ir",
+  "ul", "ur",
+  "ik", "aq", "eq",
+  "ab", "ib", "ob",
+  "az", "iz", "uz",
 ];
 
 /**
@@ -205,8 +201,22 @@ export function detectGender(name: string): Gender {
   }
 
   // Common female name ending: -a (very common in South Asian female names)
-  // But only if name is 4+ characters (to avoid false positives like "rana")
-  if (lower.length >= 5 && lower.endsWith("a") && !lower.endsWith("da") && !lower.endsWith("ja")) {
+  // But exclude known BD male patterns ending in -a like mostofa, mustafa, musa, rana etc.
+  const MALE_A_EXCEPTIONS = new Set([
+    "mostofa", "mustafa", "mostafa", "musa", "rana", "hamza", "reza",
+    "hossna", "taha", "tanvira", "isa", "esa", "shifa", "ala",
+    "sojha", "molla", "huzefa", "kutuba", "mirza", "bola", "chacha",
+    "dada", "kaka", "mama", "beta", "shola", "boka", "pola",
+    "vola", "tara",
+  ]);
+  if (
+    lower.length >= 5 &&
+    lower.endsWith("a") &&
+    !lower.endsWith("da") &&
+    !lower.endsWith("ja") &&
+    !lower.endsWith("za") &&
+    !MALE_A_EXCEPTIONS.has(lower)
+  ) {
     return "female";
   }
 

@@ -15,8 +15,6 @@ export default function Hero({ lang }: HeroProps) {
       </div>
 
       <div>
-        <span className="inline-block text-5xl md:text-6xl mb-4">💍</span>
-
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold bg-linear-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent leading-tight">
           {bn ? (
             <>

@@ -17,7 +17,7 @@ export default function Error({
   return (
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <span className="text-8xl block mb-4">😵</span>
+        <span className="text-6xl font-black block mb-4 text-red-400">!</span>
         <h1 className="text-3xl font-extrabold bg-linear-to-r from-pink-500 to-red-500 bg-clip-text text-transparent mb-4">
           Prediction Failed!
         </h1>
@@ -29,13 +29,13 @@ export default function Error({
             onClick={() => reset()}
             className="bg-linear-to-r from-pink-500 to-red-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
           >
-            🔄 Try Again
+            Try Again
           </button>
           <Link
             href="/"
             className="bg-linear-to-r from-gray-600 to-gray-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow"
           >
-            🏠 Go Home
+            Go Home
           </Link>
         </div>
       </div>

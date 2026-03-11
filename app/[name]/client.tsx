@@ -38,7 +38,6 @@ export default function NamePageClient({
       <div className="max-w-4xl mx-auto px-4 py-8 md:py-16">
         {/* Header */}
         <div className="text-center mb-10">
-          <span className="inline-block text-5xl mb-3">💍</span>
           <h1 className="text-3xl md:text-4xl font-extrabold bg-linear-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
             {language === "bn"
               ? "বিবাহিত জীবনের ভবিষ্যদ্বাণী"

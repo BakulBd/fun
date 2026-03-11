@@ -26,22 +26,22 @@ export async function generateMetadata({
   const geoLang = cookieStore.get("geo-lang")?.value;
   const { prediction, language, gender, name: prettyName } = getPrediction(safeName, lang, geoLang);
 
-  // Strip emojis from prediction for clean OG title
+  // Strip emojis from prediction for clean OG text
   const cleanPrediction = prediction
     .replace(/[\u{1F600}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
     .trim();
 
-  // OG title = the actual prediction meme — this is what shows on Facebook/social
+  // OG title = viral clickbait — this hooks people to click
   const ogTitle =
-    cleanPrediction.length > 90
-      ? cleanPrediction.substring(0, 87) + "..."
-      : cleanPrediction;
-
-  // Description with CTA
-  const ogDescription =
     language === "bn"
-      ? `${prettyName} এর বিয়ের পরের ভবিষ্যদ্বাণী! তোমার নাম দিয়েও দেখো — familys.tech`
-      : `${prettyName}'s after-marriage prediction! Try YOUR name too — familys.tech`;
+      ? `😂 ${prettyName} ভাইরাল হয়ে গেছে!`
+      : `😂 ${prettyName} just went viral!`;
+
+  // OG description = the actual meme prediction text — shows on Facebook preview card
+  const ogDescription =
+    cleanPrediction.length > 150
+      ? cleanPrediction.substring(0, 147) + "..."
+      : cleanPrediction;
 
   // Page title (shown in browser tab)
   const pageTitle =
