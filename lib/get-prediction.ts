@@ -20,8 +20,8 @@ export interface PredictionResult {
  */
 const SPECIAL_PREDICTIONS: Record<string, { en: string; bn: string }> = {
   bakul: {
-    en: "{name} will marry the most beautiful soul on earth. People will remember them as the couple that proved love stories are real. Blessed life, legendary bond.",
-    bn: "{name} পৃথিবীর সবচেয়ে সুন্দর মনের মানুষকে বিয়ে করবে। মানুষ তাদের দেখে বলবে — এই জুটি প্রমাণ করেছে যে সত্যিকারের ভালোবাসা এখনো আছে। কিংবদন্তি জুটি।",
+    en: "{name} after marriage will be the luckiest person alive because the best partner in the world chose them",
+    bn: "{name} বিয়ের পর পৃথিবীর সবচেয়ে ভাগ্যবান মানুষ হবে কারণ সেরা সঙ্গী তাকে বেছে নেবে",
   },
 };
 
