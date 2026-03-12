@@ -1,4 +1,3 @@
-import { ImageResponse } from "next/og";
 import { NextRequest, NextResponse } from "next/server";
 import { sanitizeName } from "@/lib/sanitize";
 import { getPrediction } from "@/lib/get-prediction";
@@ -9,45 +8,34 @@ import { join } from "path";
 export const runtime = "nodejs";
 
 /* ══════════════════════════════════════════════════════════════
-   Bulletproof Bengali font loading for Vercel Lambda
+   Bulletproof font loading for Vercel Lambda
    
    Problem: sharp({ text: { fontfile } }) uses Pango which needs
    fontconfig to resolve fonts. On Vercel Lambda, the bundled font
    path may not be discoverable by fontconfig, causing tofu boxes.
    
    Solution:
-   1. Copy font to /tmp (guaranteed writable on Lambda)
+   1. Copy BOTH fonts to /tmp (guaranteed writable on Lambda)
    2. Create a fontconfig.xml pointing to /tmp
    3. Set FONTCONFIG_FILE env var before first Pango call
    4. Use fontfile + font family for belt-and-suspenders reliability
    ══════════════════════════════════════════════════════════════ */
 
-const FONT_NAME = "NotoSansBengali-Bold.ttf";
-const FONT_TMP = `/tmp/${FONT_NAME}`;
+const BN_FONT = "NotoSansBengali-Bold.ttf";
+const EN_FONT = "Inter-Bold.ttf";
+const BN_TMP = `/tmp/${BN_FONT}`;
+const EN_TMP = `/tmp/${EN_FONT}`;
 const FC_CONF = "/tmp/og-fonts.conf";
 
-/* English font for Satori/ImageResponse */
-const EN_FONT_NAME = "Inter-Bold.ttf";
-let _enFontData: ArrayBuffer | null = null;
-function getEnFont(): ArrayBuffer {
-  if (_enFontData) return _enFontData;
-  const src = join(process.cwd(), "app/api/og/fonts", EN_FONT_NAME);
-  const buf = readFileSync(src);
-  _enFontData = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-  return _enFontData;
-}
+let _fontsReady = false;
+function ensureFonts(): { bn: string; en: string } {
+  if (_fontsReady) return { bn: BN_TMP, en: EN_TMP };
 
-let _fontReady = false;
-function ensureBnFont(): string {
-  if (_fontReady) return FONT_TMP;
+  const fontSrc = join(process.cwd(), "app/api/og/fonts");
 
-  // Copy font to /tmp if not already there
-  if (!existsSync(FONT_TMP)) {
-    const src = join(process.cwd(), "app/api/og/fonts", FONT_NAME);
-    writeFileSync(FONT_TMP, readFileSync(src));
-  }
+  if (!existsSync(BN_TMP)) writeFileSync(BN_TMP, readFileSync(join(fontSrc, BN_FONT)));
+  if (!existsSync(EN_TMP)) writeFileSync(EN_TMP, readFileSync(join(fontSrc, EN_FONT)));
 
-  // Create fontconfig that adds /tmp as font directory
   if (!existsSync(FC_CONF)) {
     mkdirSync("/tmp/fc-cache", { recursive: true });
     writeFileSync(
@@ -57,20 +45,13 @@ function ensureBnFont(): string {
 <fontconfig>
   <dir>/tmp</dir>
   <cachedir>/tmp/fc-cache</cachedir>
-  <match target="pattern">
-    <test name="family"><string>Noto Sans Bengali</string></test>
-    <edit name="family" mode="prepend" binding="strong">
-      <string>Noto Sans Bengali</string>
-    </edit>
-  </match>
 </fontconfig>`
     );
   }
 
-  // Tell fontconfig where our config is
   process.env.FONTCONFIG_FILE = FC_CONF;
-  _fontReady = true;
-  return FONT_TMP;
+  _fontsReady = true;
+  return { bn: BN_TMP, en: EN_TMP };
 }
 
 /* ── Helpers ── */
@@ -102,14 +83,16 @@ const CACHE_HEADERS = {
 };
 
 /* ══════════════════════════════════════════════════════════════
-   Bengali text → transparent PNG via sharp's Pango text API.
+   Text → transparent PNG via sharp's Pango text API.
    Uses fontfile + fontconfig for maximum compatibility.
+   Works for both Bengali (Noto Sans Bengali) and English (Inter).
    ══════════════════════════════════════════════════════════════ */
-async function renderBnText(
+async function renderText(
   text: string,
   color: string,
   sizePt: number,
   fontPath: string,
+  fontFamily: string,
   opts?: { width?: number; maxHeight?: number; spacing?: number; align?: string }
 ): Promise<Buffer> {
   let markup = `<span foreground="${color}"`;
@@ -120,7 +103,7 @@ async function renderBnText(
     text: {
       text: markup,
       fontfile: fontPath,
-      font: `Noto Sans Bengali Bold ${sizePt}`,
+      font: `${fontFamily} Bold ${sizePt}`,
       rgba: true,
       dpi: 72,
       ...(opts?.width ? { width: opts.width } : {}),
@@ -277,302 +260,81 @@ export async function GET(req: NextRequest) {
     const nameLen = prettyName.length;
     const nameSize = nameLen > 16 ? 48 : nameLen > 10 ? 56 : 64;
 
-    /* ── Bengali path: sharp text API (Pango + HarfBuzz + fontconfig) ── */
-    if (isBn) {
-      const fontPath = ensureBnFont();
-      const len = clean.length;
-      const pSize = len > 200 ? 22 : len > 140 ? 25 : len > 90 ? 28 : 32;
+    /* ── Both paths use sharp text API (Pango + HarfBuzz + fontconfig) ── */
+    const fonts = ensureFonts();
+    const fontPath = isBn ? fonts.bn : fonts.en;
+    const fontFamily = isBn ? "Noto Sans Bengali" : "Inter";
 
-      // 1. Render name (large, white, bold)
-      const nameImg = await renderBnText(prettyName, "white", nameSize, fontPath, {
-        width: 1050,
-      });
+    const len = clean.length;
+    const pSize = isBn
+      ? (len > 200 ? 22 : len > 140 ? 25 : len > 90 ? 28 : 32)
+      : (len > 120 ? 26 : len > 80 ? 30 : 34);
 
-      // 2. Render badge "বিয়ের পরে"
-      const badgeImg = await renderBnText(
-        "\u09AC\u09BF\u09AF\u09BC\u09C7\u09B0 \u09AA\u09B0\u09C7",
-        "#c4b5fd",
-        14,
-        fontPath,
-        { spacing: 3000 }
-      );
+    // Truncate English if too long
+    const predText = !isBn && len > 200
+      ? clean.substring(0, 200) + "\u2026"
+      : clean;
 
-      // 3. Render prediction text (auto-wrapped by Pango at width)
-      const predImg = await renderBnText(
-        `\u201C${clean}\u201D`,
-        "#e2e8f0",
-        pSize,
-        fontPath,
-        { width: 1040, maxHeight: 340 }
-      );
-      const predMeta = await sharp(predImg).metadata();
-      const predH = predMeta.height || 100;
-      const predTop = Math.max(185, Math.floor(360 - predH / 2));
+    // 1. Render name (large, white, bold)
+    const nameImg = await renderText(prettyName, "white", nameSize, fontPath, fontFamily, {
+      width: 1050,
+    });
 
-      // 4. Render CTA "তোমার নাম দিয়ে দেখো"
-      const ctaImg = await renderBnText(
-        "\u09A4\u09CB\u09AE\u09BE\u09B0 \u09A8\u09BE\u09AE \u09A6\u09BF\u09AF\u09BC\u09C7 \u09A6\u09C7\u0996\u09CB",
-        "white",
-        16,
-        fontPath
-      );
-
-      // 5. Build stunning background SVG + composite all text layers
-      const bgSvg = buildBgSvg(predTop, predH);
-      const pngBuffer = await sharp(Buffer.from(bgSvg))
-        .resize(1200, 630)
-        .composite([
-          { input: nameImg, top: 40, left: 60 },
-          { input: badgeImg, top: 126, left: 72 },
-          { input: predImg, top: predTop, left: 84 },
-          { input: ctaImg, top: 578, left: 920 },
-        ])
-        .png({ compressionLevel: 6 })
-        .toBuffer();
-
-      return new NextResponse(new Uint8Array(pngBuffer), {
-        status: 200,
-        headers: CACHE_HEADERS,
-      });
-    }
-
-    /* ── English path: Satori / next-og with bundled Inter Bold ── */
-    const enFontData = getEnFont();
-
-    // Truncate for English OG card (Satori handles wrapping but keep reasonable)
-    const enMaxLen = 200;
-    const text =
-      clean.length > enMaxLen
-        ? clean.substring(0, enMaxLen) + "\u2026"
-        : clean;
-    const pSize = text.length > 120 ? 26 : text.length > 80 ? 30 : 34;
-
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            background: "#0a0a0a",
-            fontFamily: "Inter",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          {/* Ambient glow: purple top-left */}
-          <div
-            style={{
-              display: "flex",
-              position: "absolute",
-              top: "-120px",
-              left: "-80px",
-              width: "500px",
-              height: "500px",
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)",
-            }}
-          />
-          {/* Ambient glow: pink bottom-right */}
-          <div
-            style={{
-              display: "flex",
-              position: "absolute",
-              bottom: "-100px",
-              right: "-60px",
-              width: "460px",
-              height: "460px",
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle, rgba(236,72,153,0.13) 0%, transparent 70%)",
-            }}
-          />
-          {/* Subtle center glow */}
-          <div
-            style={{
-              display: "flex",
-              position: "absolute",
-              top: "180px",
-              left: "400px",
-              width: "400px",
-              height: "300px",
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%)",
-            }}
-          />
-
-          {/* Top accent bar */}
-          <div
-            style={{
-              display: "flex",
-              width: "100%",
-              height: "5px",
-              background:
-                "linear-gradient(90deg, #7c3aed, #a855f7, #ec4899, #f97316, #eab308)",
-            }}
-          />
-
-          {/* Content */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              padding: "44px 60px 32px",
-              justifyContent: "space-between",
-            }}
-          >
-            {/* Header */}
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: `${nameSize}px`,
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  lineHeight: 1.15,
-                  letterSpacing: "-1px",
-                }}
-              >
-                {prettyName}
-              </div>
-              <div style={{ display: "flex", marginTop: "12px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    color: "#c4b5fd",
-                    textTransform: "uppercase",
-                    letterSpacing: "4px",
-                    background: "rgba(124,58,237,0.18)",
-                    border: "1px solid rgba(139,92,246,0.3)",
-                    padding: "6px 18px",
-                    borderRadius: "6px",
-                  }}
-                >
-                  AFTER MARRIAGE
-                </div>
-              </div>
-            </div>
-
-            {/* Prediction text with left accent */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "flex-start",
-                gap: "20px",
-                maxWidth: "1060px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  width: "4px",
-                  minHeight: "60px",
-                  height: "100%",
-                  borderRadius: "4px",
-                  background: "linear-gradient(180deg, #a855f7, #ec4899)",
-                  flexShrink: 0,
-                }}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: `${pSize}px`,
-                  fontWeight: 700,
-                  color: "#e2e8f0",
-                  lineHeight: 1.55,
-                }}
-              >
-                {"\u201C"}
-                {text}
-                {"\u201D"}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "8px",
-                    background: "linear-gradient(135deg, #7c3aed, #ec4899)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    color: "white",
-                  }}
-                >
-                  MP
-                </div>
-                <div
-                  style={{
-                    fontSize: "17px",
-                    fontWeight: 700,
-                    color: "#64748b",
-                  }}
-                >
-                  familys.tech
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-                  color: "white",
-                  padding: "10px 28px",
-                  borderRadius: "50px",
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  boxShadow: "0 4px 20px rgba(124,58,237,0.35)",
-                }}
-              >
-                Try YOUR Name
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-      {
-        width: 1200,
-        height: 630,
-        fonts: [
-          {
-            name: "Inter",
-            data: enFontData,
-            weight: 700,
-            style: "normal",
-          },
-        ],
-        headers: {
-          "Cache-Control":
-            "public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000",
-        },
-      }
+    // 2. Render badge text
+    const badgeText = isBn
+      ? "\u09AC\u09BF\u09AF\u09BC\u09C7\u09B0 \u09AA\u09B0\u09C7"
+      : "AFTER MARRIAGE";
+    const badgeImg = await renderText(
+      badgeText,
+      "#c4b5fd",
+      isBn ? 14 : 13,
+      fontPath,
+      fontFamily,
+      { spacing: isBn ? 3000 : 4000 }
     );
+
+    // 3. Render prediction text (auto-wrapped by Pango at width)
+    const predImg = await renderText(
+      `\u201C${predText}\u201D`,
+      "#e2e8f0",
+      pSize,
+      fontPath,
+      fontFamily,
+      { width: 1040, maxHeight: 340 }
+    );
+    const predMeta = await sharp(predImg).metadata();
+    const predH = predMeta.height || 100;
+    const predTop = Math.max(185, Math.floor(360 - predH / 2));
+
+    // 4. Render CTA text
+    const ctaText = isBn
+      ? "\u09A4\u09CB\u09AE\u09BE\u09B0 \u09A8\u09BE\u09AE \u09A6\u09BF\u09AF\u09BC\u09C7 \u09A6\u09C7\u0996\u09CB"
+      : "Try YOUR Name";
+    const ctaImg = await renderText(
+      ctaText,
+      "white",
+      16,
+      fontPath,
+      fontFamily
+    );
+
+    // 5. Build stunning background SVG + composite all text layers
+    const bgSvg = buildBgSvg(predTop, predH);
+    const pngBuffer = await sharp(Buffer.from(bgSvg))
+      .resize(1200, 630)
+      .composite([
+        { input: nameImg, top: 40, left: 60 },
+        { input: badgeImg, top: 126, left: 72 },
+        { input: predImg, top: predTop, left: 84 },
+        { input: ctaImg, top: 578, left: 920 },
+      ])
+      .png({ compressionLevel: 6 })
+      .toBuffer();
+
+    return new NextResponse(new Uint8Array(pngBuffer), {
+      status: 200,
+      headers: CACHE_HEADERS,
+    });
   } catch (e) {
     console.error("OG image generation error:", e);
     return NextResponse.json(
